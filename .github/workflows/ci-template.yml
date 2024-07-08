@@ -1,0 +1,138 @@
+name: Central CI Pipeline
+
+on: [workflow_call]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.18.0, 16.4.0, 18.15.0, 20.9.0]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: |
+          npm cache clean --force
+          npm i
+        cache:
+          paths:
+            - node_modules
+            - ~/.npm
+
+  generate_artifacts:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate TAB1 and TAB2 artifacts
+        run: |
+          mkdir -p tabUtils
+          wget -q -P ./tabUtils https://gitlab.com/itentialopensource/opensource-common-utils/-/raw/master/documentation-pipeline-tool.js
+          wget -q -P ./tabUtils https://gitlab.com/itentialopensource/opensource-common-utils/-/raw/master/projectTypeTemplates/project-templates.md
+          wget -q -P ./tabUtils https://gitlab.com/itentialopensource/opensource-common-utils/-/raw/master/projectTypeTemplates/adapter-template.md
+          chmod +x tabUtils/documentation-pipeline-tool.js
+          node ./tabUtils/documentation-pipeline-tool.js -p "${{ github.workspace }}" -u "${{ github.repository }}"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+      - name: Run linter
+        run: npm run lint
+
+  code_quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Run Code Quality
+        run: |
+          export SP_VERSION=$(echo "$GITHUB_SERVER_URL" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
+          docker run \
+            --env SOURCE_CODE="$PWD" \
+            --volume "$PWD":/code \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            "registry.gitlab.com/gitlab-org/security-products/codequality:$SP_VERSION" /code
+        continue-on-error: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: gl-code-quality-report
+          path: gl-code-quality-report.json
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+      - name: Run Security Audit
+        run: npm audit --registry=https://registry.npmjs.org --audit-level=high
+
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+  integration_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+      - name: Run Integration Tests
+        run: npm run test:integration
+
+  commit_artifacts:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Git
+        run: |
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+      - name: Commit TAB1 and TAB2
+        run: |
+          git add TAB1.md
+          git add TAB2.md
+          git commit -m "Updating generated TAB1 and TAB2 [skip ci]" || echo "No changes to commit"
+          git push
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')
+    steps:
+      - uses: actions/checkout@v2
+      - name: Verify author and repository
+        run: |
+          if [ "$(cat package.json | jq -r '.author')" != "Itential" ]; then
+            echo "Error: Invalid author in package.json"
+            exit 1
+          fi
+          URL="${{ github.repository_url }}/info/refs?service=git-upload-pack"
+          wget $URL
+      - name: Deploy
+        run: |
+          # Add your deployment steps here
