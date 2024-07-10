@@ -181,9 +181,8 @@ jobs:
             echo "Error: Invalid author in package.json"
             exit 1
           fi
-          URL="${{ github.repository }}/info/refs?service=git-upload-pack"
+          URL="https://github.com/${{ github.repository }}/info/refs?service=git-upload-pack"
           wget $URL
       - name: Deploy
         run: |
           # Add deployment steps here
-
