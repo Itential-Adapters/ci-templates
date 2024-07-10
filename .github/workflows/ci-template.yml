@@ -235,6 +235,36 @@ jobs:
       - name: Run Integration Tests
         run: npm run test:integration
 
+  metadata_compliance_tool:
+    runs-on: ubuntu-latest
+    needs: integration_tests
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: npm ci
+      - name: Run metadata-compliance-tool
+        run: |
+          git clone https://username:${{ secrets.COMPLIANCE_TOKEN }}@gitlab.com/itentialopensource/metadata-compliance-tool.git
+          cd metadata-compliance-tool
+          npm ci
+          echo "Running metadata-compliance-tool on projectID ${{ github.event.pull_request.base.repo.id }}, branch ${{ github.event.pull_request.head.ref }}"
+          node group-compliance.js -p ${{ github.event.pull_request.base.repo.id }} -b ${{ github.event.pull_request.head.ref }} -t ${{ secrets.COMPLIANCE_TOKEN }} --warning
+          node group-compliance.js -p ${{ github.event.pull_request.base.repo.id }} -b ${{ github.event.pull_request.head.ref }} -t ${{ secrets.COMPLIANCE_TOKEN }} --warning --txt
+          cp compliance-reports/compliance-report.json ${{ github.workspace }}
+          cp compliance-reports/compliance-report.txt ${{ github.workspace }}
+          if grep -q "Error" compliance-reports/compliance-report.txt; then
+            echo "Errors found, please check job artifacts for detailed compliance report"
+            exit 1
+          fi
+          echo "Please check job artifacts for detailed compliance report"
+      - name: Upload compliance reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: compliance-reports
+          path: |
+            compliance-reports/compliance-report.json
+            compliance-reports/compliance-report.txt
+
   commit_artifacts:
     runs-on: ubuntu-latest
     needs: integration_tests
