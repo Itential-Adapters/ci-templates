@@ -2,6 +2,9 @@ name: Central CI Pipeline
 
 on: [workflow_call]
 
+permissions:
+  contents: write
+
 jobs:
   node14:
     runs-on: ubuntu-latest
