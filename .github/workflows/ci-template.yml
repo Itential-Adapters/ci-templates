@@ -277,7 +277,7 @@ jobs:
           git config --global user.name "${{ github.actor }}"
       - name: Commit TAB1 and TAB2
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git add TAB1.md TAB2.md
           git commit -m "Updating generated TAB1 and TAB2 [skip ci]" || echo "No changes to commit"
