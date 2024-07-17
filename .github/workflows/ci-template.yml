@@ -126,6 +126,13 @@ jobs:
           wget -q -P ./tabUtils https://gitlab.com/itentialopensource/opensource-common-utils/-/raw/master/projectTypeTemplates/adapter-template.md
           chmod +x tabUtils/documentation-pipeline-tool.js
           node ./tabUtils/documentation-pipeline-tool.js -p "${{ github.workspace }}" -u "${{ github.repository }}"
+      - name: Upload generated markdown and metadata files
+        uses: actions/upload-artifact@v4
+        with:
+          name: readme_metadata_artifacts
+          path: |
+            TAB1.md
+            TAB2.md
       - name: List files in workspace
         run: |
           ls -alh ${{ github.workspace }}
