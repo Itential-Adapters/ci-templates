@@ -291,6 +291,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v4
       - name: Set up Git
         run: |
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
@@ -301,6 +302,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cp readme_metadata_artifacts/TAB1.md .
+          cp readme_metadata_artifacts/TAB2.md .
           git add ./tabUtils/TAB1.md ./tabUtils/TAB2.md
           git commit -m "Updating generated TAB1 and TAB2 [skip ci]" || echo "No changes to commit"
           git push
