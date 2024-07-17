@@ -303,7 +303,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: commit_artifacts
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')
+    if: github.ref_type == 'pull_request' && github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'master'
     steps:
       - uses: actions/checkout@v2
       - name: Verify author and repository
@@ -314,9 +314,29 @@ jobs:
           fi
           URL="https://github.com/${{ github.repository }}/info/refs?service=git-upload-pack"
           wget $URL
-      - name: Deploy
+      - name: Determine version bump
+        id: version
         run: |
-          # Add deployment steps here
+          branch_name=$(echo "${{ github.event.pull_request.head.ref }}" | cut -d/ -f2)
+          if [[ "$branch_name" == "patch"* ]]; then
+            echo "::set-output name=bump::patch"
+          elif [[ "$branch_name" == "minor"* ]]; then
+            echo "::set-output name=bump::minor"
+          elif [[ "$branch_name" == "major"* ]]; then
+            echo "::set-output name=bump::major"
+          else
+            echo "::set-output name=bump::patch"
+          fi
+      - name: Version Bump
+        if: success()
+        run: npm version ${{ steps.version.outputs.bump }}
+      # - name: Deploy to npm registry
+      #   run: |
+      #    npm publish --access public
+      #   env:
+      #    NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+
 
   # s3:
   #   runs-on: ubuntu-latest
