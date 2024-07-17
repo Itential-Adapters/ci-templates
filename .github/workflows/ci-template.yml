@@ -314,6 +314,10 @@ jobs:
           fi
           URL="https://github.com/${{ github.repository }}/info/refs?service=git-upload-pack"
           wget $URL
+      - name: Configure Git identity
+        run: |
+          git config --global user.email "svc.adapter-ci@itential.com"
+          git config --global user.name "svc.adapter-ci"
       - name: Determine version bump
         id: version
         run: |
