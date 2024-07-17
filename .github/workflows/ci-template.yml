@@ -127,7 +127,8 @@ jobs:
           chmod +x tabUtils/documentation-pipeline-tool.js
           node ./tabUtils/documentation-pipeline-tool.js -p "${{ github.workspace }}" -u "${{ github.repository }}"
       - name: List files
-        run: ls -alh
+        run: cd tabUtils
+             ls -alh     
         continue-on-error: true
       
 
