@@ -132,7 +132,10 @@ jobs:
       - name: List files in tabUtils
         run: |
           ls -alh tabUtils
-        continue-on-error: true
+      - name: Search for TAB1 and TAB2
+        run: |
+          find ${{ github.workspace }} -name "TAB1.md"
+          find ${{ github.workspace }} -name "TAB2.md"
         
 
   lint:
