@@ -336,6 +336,7 @@ jobs:
         run: |
           npm version ${{ steps.version.outputs.bump }}
           git add package.json package-lock.json
+          git reset -- refs?service=git-upload-pack
           git commit -m "Bump version to ${{ steps.version.outputs.bump }}"
           git push origin master
       # - name: Deploy to npm registry
