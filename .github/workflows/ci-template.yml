@@ -133,16 +133,6 @@ jobs:
           path: |
             TAB1.md
             TAB2.md
-      - name: List files in workspace
-        run: |
-          ls -alh ${{ github.workspace }}
-      - name: List files in tabUtils
-        run: |
-          ls -alh tabUtils
-      - name: Search for TAB1 and TAB2
-        run: |
-          find ${{ github.workspace }} -name "TAB1.md"
-          find ${{ github.workspace }} -name "TAB2.md"
         
 
   lint:
