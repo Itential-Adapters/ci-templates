@@ -304,7 +304,8 @@ jobs:
         run: |
           cp readme_metadata_artifacts/TAB1.md .
           cp readme_metadata_artifacts/TAB2.md .
-          git add ./tabUtils/TAB1.md ./tabUtils/TAB2.md
+          git add TAB1.md
+          git add TAB2.md
           git commit -m "Updating generated TAB1 and TAB2 [skip ci]" || echo "No changes to commit"
           git push
         continue-on-error: true
