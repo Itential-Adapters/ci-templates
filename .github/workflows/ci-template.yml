@@ -331,9 +331,13 @@ jobs:
           else
             echo "::set-output name=bump::patch"
           fi
-      - name: Version Bump
+      - name: Version Bump and Commit package and package-lock
         if: success()
-        run: npm version ${{ steps.version.outputs.bump }}
+        run: |
+          npm version ${{ steps.version.outputs.bump }}
+          git add package.json package-lock.json
+          git commit -m "Bump version to ${{ steps.version.outputs.bump }}"
+          git push origin master
       # - name: Deploy to npm registry
       #   run: |
       #    npm publish --access public
