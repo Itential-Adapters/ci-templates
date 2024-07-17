@@ -126,12 +126,14 @@ jobs:
           wget -q -P ./tabUtils https://gitlab.com/itentialopensource/opensource-common-utils/-/raw/master/projectTypeTemplates/adapter-template.md
           chmod +x tabUtils/documentation-pipeline-tool.js
           node ./tabUtils/documentation-pipeline-tool.js -p "${{ github.workspace }}" -u "${{ github.repository }}"
-      - name: List files
+      - name: List files in workspace
         run: |
-              cd tabUtils
-              ls -alh     
+          ls -alh ${{ github.workspace }}
+      - name: List files in tabUtils
+        run: |
+          ls -alh tabUtils
         continue-on-error: true
-      
+        
 
   lint:
     runs-on: ubuntu-latest
