@@ -335,22 +335,11 @@ jobs:
         if: success()
         run: |
           npm version ${{ steps.version.outputs.bump }}
-      - name: Upload generated package files
-        uses: actions/upload-artifact@v4
-        with:
-          name: package_artifacts
-          path: |
-            package.json
-            package-lock.json
       - name: Commit package and package-lock
         if: success()
         run: |
-          cp package_artifacts/package.json .
-          cp package_artifacts/package-lock.json .
-          git add package.json
-          git add package-lock.json
-          git reset -- refs?service=git-upload-pack
-          git status
+          rm -f refs?service=git-upload-pack
+          git add package.json package-lock.json
           git commit -m "Bump version to ${{ steps.version.outputs.bump }}"
           git push origin master
       # - name: Deploy to npm registry
